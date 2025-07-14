@@ -15,6 +15,45 @@ require_once 'db.php';
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
+  case 'GET':
+    // Obtener recibos filtrados por editable y juntaIds
+    $editable = isset($_GET['editable']) ? intval($_GET['editable']) : null;
+    $juntaIds = isset($_GET['juntaIds']) ? $_GET['juntaIds'] : null;
+    $where = [];
+    $params = [];
+    $types = '';
+    if ($editable !== null) {
+      $where[] = 'editable = ?';
+      $params[] = $editable;
+      $types .= 'i';
+    }
+    if ($juntaIds) {
+      $ids = array_filter(array_map('intval', explode(',', $juntaIds)));
+      if (count($ids) > 0) {
+        $where[] = 'id_junta IN (' . implode(',', array_fill(0, count($ids), '?')) . ')';
+        $params = array_merge($params, $ids);
+        $types .= str_repeat('i', count($ids));
+      }
+    }
+    $sql = 'SELECT *, (
+      SELECT IFNULL(SUM(monto),0) FROM recibo_detalles d WHERE d.id_recibo = recibos.id
+    ) AS total_recibo FROM recibos';
+    if (count($where) > 0) {
+      $sql .= ' WHERE ' . implode(' AND ', $where);
+    }
+    $stmt = $conn->prepare($sql);
+    if ($params) {
+      $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $recibos = [];
+    while ($row = $result->fetch_assoc()) {
+      $recibos[] = $row;
+    }
+    $stmt->close();
+    echo json_encode($recibos);
+    break;
   case 'POST':
     $input = json_decode(file_get_contents('php://input'), true);
     if (!$input) {
@@ -28,26 +67,48 @@ switch ($method) {
     $mes = $input['mes'] ?? null;
     $anio = $input['anio'] ?? null;
     $sectorId = $input['sectorId'] ?? null;
-    $tipoReciboEspecial = $input['tipoReciboEspecial'] ?? null;
+    $idTipoRecibo = 0;
+    if ($tipo === 'especial') {
+      // El frontend debe enviar el id del tipo especial en tipoReciboEspecial
+      $idTipoRecibo = isset($input['tipoReciboEspecial']) ? intval($input['tipoReciboEspecial']) : 0;
+      if ($idTipoRecibo <= 0) {
+        http_response_code(400);
+        echo json_encode(["error" => "Falta el tipo de recibo especial"]);
+        exit;
+      }
+    }
     if (!$juntaId || !$tipo || ($tipo === 'mensual' && (!$mes || !$anio))) {
       http_response_code(400);
       echo json_encode(["error" => "Faltan datos requeridos"]);
       exit;
     }
-    // Aquí iría la lógica para crear los recibos (simplificado)
-    // Por ahora solo simula éxito
-    echo json_encode([
-      "success" => true,
-      "message" => "Recibos creados correctamente",
-      "data" => [
-        "juntaId" => $juntaId,
-        "tipo" => $tipo,
-        "mes" => $mes,
-        "anio" => $anio,
-        "sectorId" => $sectorId,
-        "tipoReciboEspecial" => $tipoReciboEspecial
-      ]
-    ]);
+    // Insertar recibo en la base de datos
+    $stmt = $conn->prepare("INSERT INTO recibos (id_junta, tipo, mes, anio, id_sector, id_tipo_recibo, editable, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, 1, NOW())");
+    $mesVal = $tipo === 'mensual' ? $mes : null;
+    $anioVal = $tipo === 'mensual' ? $anio : null;
+    $stmt->bind_param(
+      'isiiii',
+      $juntaId,
+      $tipo,
+      $mesVal,
+      $anioVal,
+      $sectorId,
+      $idTipoRecibo
+    );
+    if ($stmt->execute()) {
+      $id = $stmt->insert_id;
+      $stmt->close();
+      echo json_encode([
+        "success" => true,
+        "id" => $id,
+        "message" => "Recibo creado correctamente"
+      ]);
+    } else {
+      $error = $stmt->error;
+      $stmt->close();
+      http_response_code(500);
+      echo json_encode(["error" => "Error al crear recibo: $error"]);
+    }
     break;
   case 'PUT':
     // Endpoint para mandar recibos
@@ -75,6 +136,31 @@ switch ($method) {
     }
     $stmt2->close();
     echo json_encode(["success" => true, "message" => "Recibo enviado a las unidades seleccionadas."]);
+    break;
+  case 'DELETE':
+    // Eliminar recibo y sus detalles
+    $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+    if (!$id) {
+      http_response_code(400);
+      echo json_encode(["error" => "Falta el id del recibo"]);
+      break;
+    }
+    // 1. Eliminar detalles del recibo
+    $stmt1 = $conn->prepare("DELETE FROM recibo_detalles WHERE id_recibo = ?");
+    $stmt1->bind_param('i', $id);
+    $ok1 = $stmt1->execute();
+    $stmt1->close();
+    // 2. Eliminar el recibo principal
+    $stmt2 = $conn->prepare("DELETE FROM recibos WHERE id = ?");
+    $stmt2->bind_param('i', $id);
+    $ok2 = $stmt2->execute();
+    $stmt2->close();
+    if ($ok2) {
+      echo json_encode(["success" => true]);
+    } else {
+      http_response_code(500);
+      echo json_encode(["error" => "No se pudo eliminar el recibo"]);
+    }
     break;
   default:
     http_response_code(405);

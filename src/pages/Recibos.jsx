@@ -26,7 +26,6 @@ function Recibos() {
       {tab === 'crear' && (
         <>
           <Crear />
-          <Detalles />
         </>
       )}
       {tab === 'buscar' && <Buscar />}

@@ -107,9 +107,10 @@ const Layout = ({ children }) => {
         </div>
       )}
       <div className="flex flex-1">
-        {/* Aside desktop */}
+        {/* Aside desktop fijo */}
         <aside
-          className={`bg-gray-800 text-white flex-shrink-0 hidden md:flex flex-col transition-all duration-200 ${asideOpen ? "w-56" : "w-20"}`}
+          className={`bg-gray-800 text-white flex-shrink-0 hidden md:flex flex-col transition-all duration-200 ${asideOpen ? "w-56" : "w-20"} h-screen sticky top-0 left-0`}
+          style={{ minHeight: '100vh' }}
         >
           {/* Botón de colapsar/expandir */}
           <div className="h-16 flex items-center border-b border-gray-700 px-4">
@@ -139,15 +140,16 @@ const Layout = ({ children }) => {
             ))}
           </nav>
         </aside>
-        {/* Main: contenido dinámico */}
-        <main className="flex-1 bg-gray-100 p-4 overflow-auto">
-          {children}
-        </main>
+        {/* Contenedor principal con contenido y footer */}
+        <div className="flex-1 flex flex-col w-full">
+          <main className="flex-1 bg-gray-100 py-4 px-0 md:px-4 overflow-auto w-full max-w-full">
+            {children}
+          </main>
+          <footer className="bg-gray-900 text-gray-200 text-center py-2 w-full">
+            © {new Date().getFullYear()} CondominioWeb. Todos los derechos reservados. - Desarrollado por AppJorge.com
+          </footer>
+        </div>
       </div>
-      {/* Footer fijo */}
-      <footer className="bg-gray-900 text-gray-200 text-center py-2">
-        © {new Date().getFullYear()} CondominioWeb. Todos los derechos reservados. - Desarrollado por AppJorge.com
-      </footer>
     </div>
   );
 };

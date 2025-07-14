@@ -1,12 +1,42 @@
-# React + Vite
+# CondominioWeb
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación web modular para la gestión administrativa de condominios. Permite administrar propietarios, unidades, recibos, pagos y más, con una interfaz moderna y responsiva construida en React, Vite y Tailwind CSS, y un backend en PHP/MySQL.
 
-Currently, two official plugins are available:
+## Características principales
+- Gestión de propietarios y unidades
+- Creación y búsqueda de recibos
+- Detalles de recibos con desglose y total automático
+- Filtros, búsquedas y acciones rápidas
+- Backend robusto en PHP/MySQL
+- Interfaz responsiva y moderna
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Instalación y ejecución
 
-## Expanding the ESLint configuration
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/Jorge10Borges/CondominioWeb.git
+   ```
+2. Instala las dependencias:
+   ```bash
+   cd CondominioWeb
+   npm install
+   ```
+3. Configura el archivo `.env` si es necesario (por ejemplo, para la URL de la API).
+4. Inicia el frontend:
+   ```bash
+   npm run dev
+   ```
+5. Configura el backend PHP en tu servidor local (por ejemplo, XAMPP) y asegúrate de que la base de datos esté creada y configurada.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Estructura del proyecto
+
+- `src/` — Código fuente React
+- `api/` — Endpoints PHP
+- `public/` — Recursos estáticos
+- `Recursos/` — Imágenes y archivos de diseño
+
+## Contribuciones
+¡Las contribuciones son bienvenidas! Puedes abrir issues o pull requests para sugerir mejoras o reportar errores.
+
+## Licencia
+Este proyecto está bajo la licencia MIT.
