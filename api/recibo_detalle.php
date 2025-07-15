@@ -48,6 +48,11 @@ if ($method === 'POST') {
     if ($stmt->execute()) {
         $id = $stmt->insert_id;
         $stmt->close();
+        // Actualizar el total del recibo
+        $stmt2 = $conn->prepare("UPDATE recibos SET total = (SELECT IFNULL(SUM(monto),0) FROM recibo_detalles WHERE id_recibo = ?) WHERE id = ?");
+        $stmt2->bind_param('ii', $reciboId, $reciboId);
+        $stmt2->execute();
+        $stmt2->close();
         // Devolver el detalle insertado
         $detalle = [
             "id" => $id,
@@ -78,6 +83,22 @@ if ($method === 'DELETE') {
     $stmt = $conn->prepare("DELETE FROM recibo_detalles WHERE id = ?");
     $stmt->bind_param('i', $id);
     if ($stmt->execute()) {
+        // Obtener el id_recibo antes de cerrar la conexión
+        $stmt2 = $conn->prepare("SELECT id_recibo FROM recibo_detalles WHERE id = ?");
+        $stmt2->bind_param('i', $id);
+        $stmt2->execute();
+        $stmt2->bind_result($reciboId);
+        $reciboId = null;
+        if ($stmt2->fetch()) {
+            $stmt2->close();
+            // Actualizar el total del recibo
+            $stmt3 = $conn->prepare("UPDATE recibos SET total = (SELECT IFNULL(SUM(monto),0) FROM recibo_detalles WHERE id_recibo = ?) WHERE id = ?");
+            $stmt3->bind_param('ii', $reciboId, $reciboId);
+            $stmt3->execute();
+            $stmt3->close();
+        } else {
+            $stmt2->close();
+        }
         $stmt->close();
         echo json_encode(["success" => true]);
     } else {
@@ -104,6 +125,22 @@ if ($method === 'PUT') {
     $stmt = $conn->prepare("UPDATE recibo_detalles SET concepto=?, descripcion=?, monto=? WHERE id=?");
     $stmt->bind_param('sssi', $concepto, $descripcion, $monto, $id);
     if ($stmt->execute()) {
+        // Obtener el id_recibo de este detalle
+        $stmt2 = $conn->prepare("SELECT id_recibo FROM recibo_detalles WHERE id = ?");
+        $stmt2->bind_param('i', $id);
+        $stmt2->execute();
+        $stmt2->bind_result($reciboId);
+        $reciboId = null;
+        if ($stmt2->fetch()) {
+            $stmt2->close();
+            // Actualizar el total del recibo
+            $stmt3 = $conn->prepare("UPDATE recibos SET total = (SELECT IFNULL(SUM(monto),0) FROM recibo_detalles WHERE id_recibo = ?) WHERE id = ?");
+            $stmt3->bind_param('ii', $reciboId, $reciboId);
+            $stmt3->execute();
+            $stmt3->close();
+        } else {
+            $stmt2->close();
+        }
         $stmt->close();
         echo json_encode(["success" => true]);
     } else {

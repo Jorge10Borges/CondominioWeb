@@ -30,7 +30,7 @@ function DetalleModal({ open, onClose, onSave, initialData, loading, reciboId })
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">{initialData ? 'Editar detalle' : 'Agregar detalle'}</h3>
           {typeof reciboId !== 'undefined' && reciboId !== null && (
-            <span className="text-base font-semibold text-gray-600">Recibo #{reciboId.toString().padStart(5, '0')}</span>
+            <span className="text-base font-semibold text-gray-600">ID #{reciboId.toString().padStart(5, '0')}</span>
           )}
         </div>
         <form onSubmit={handleSubmit}>

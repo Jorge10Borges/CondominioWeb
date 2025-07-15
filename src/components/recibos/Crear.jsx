@@ -141,7 +141,7 @@ function Crear() {
 
 
   // Handler para crear recibos masivos
-  const handleCrearRecibosMasivos = async () => {
+  const handleCrearRecibos = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/recibos.php`, {
@@ -344,7 +344,7 @@ if (mostrarDetalles && reciboId) {
                     <button
                       className="bg-green-600 text-white ms-2 px-4 py-1 rounded hover:bg-green-700 cursor-pointer"
                       disabled={!puedeCrearMensual}
-                      onClick={handleCrearRecibosMasivos}
+                      onClick={handleCrearRecibos}
                     >{loading ? "Creando..." : "Crear recibo mensual"}</button>
                   </div>
                 </div>
@@ -355,7 +355,7 @@ if (mostrarDetalles && reciboId) {
                   <button
                     className="bg-green-600 text-white ms-2 px-4 py-1 rounded hover:bg-green-700 cursor-pointer"
                     disabled={!puedeCrearMensual}
-                    onClick={handleCrearRecibosMasivos}
+                    onClick={handleCrearRecibos}
                   >{loading ? "Creando..." : "Crear recibo mensual"}</button>
                 </div>
               )}
@@ -439,7 +439,7 @@ if (mostrarDetalles && reciboId) {
           <table className="min-w-full border text-sm">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border px-1 py-1 w-1 whitespace-nowrap">Nº</th>
+                <th className="border px-1 py-1 w-1 whitespace-nowrap">ID</th>
                 <th className="border px-2 py-1">Junta</th>
                 <th className="border px-1 py-1 w-1 whitespace-nowrap">Mes</th>
                 <th className="border px-1 py-1 w-1 whitespace-nowrap">Año</th>

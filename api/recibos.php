@@ -1,4 +1,5 @@
 <?php
+file_put_contents('debug_recibos.log', date('c') . " INICIO RECIBOS.PHP " . json_encode($_SERVER) . "\n", FILE_APPEND);
 // api/recibos.php
 
 // Configuración de CORS para todas las respuestas
@@ -16,9 +17,16 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
   case 'GET':
-    // Obtener recibos filtrados por editable y juntaIds
+    // DEBUG: Mostrar los filtros recibidos
+    file_put_contents('debug_recibos.log', date('c') . ' ' . json_encode($_GET) . "\n", FILE_APPEND);
+    // Obtener recibos filtrados por editable, juntaIds, tipo, mes, anio, tipoReciboEspecial
     $editable = isset($_GET['editable']) ? intval($_GET['editable']) : null;
-    $juntaIds = isset($_GET['juntaIds']) ? $_GET['juntaIds'] : null;
+    // Aceptar tanto juntaIds (array/cadena) como juntaId (simple)
+    $juntaIds = $_GET['juntaIds'] ?? $_GET['juntaId'] ?? null;
+    $tipo = isset($_GET['tipoRecibo']) ? $_GET['tipoRecibo'] : null;
+    $mes = isset($_GET['mes']) ? intval($_GET['mes']) : null;
+    $anio = isset($_GET['anio']) ? intval($_GET['anio']) : null;
+    $tipoReciboEspecial = isset($_GET['tipoReciboEspecial']) ? intval($_GET['tipoReciboEspecial']) : null;
     $where = [];
     $params = [];
     $types = '';
@@ -35,9 +43,36 @@ switch ($method) {
         $types .= str_repeat('i', count($ids));
       }
     }
-    $sql = 'SELECT *, (
-      SELECT IFNULL(SUM(monto),0) FROM recibo_detalles d WHERE d.id_recibo = recibos.id
-    ) AS total_recibo FROM recibos';
+    if ($tipo === 'mensual') {
+      $where[] = 'id_tipo_recibo = 0';
+      if ($mes) {
+        $where[] = 'mes = ?';
+        $params[] = $mes;
+        $types .= 'i';
+      }
+      if ($anio) {
+        $where[] = 'anio = ?';
+        $params[] = $anio;
+        $types .= 'i';
+      }
+    } else if ($tipo === 'especial') {
+      $where[] = 'id_tipo_recibo > 0';
+      if ($tipoReciboEspecial) {
+        $where[] = 'id_tipo_recibo = ?';
+        $params[] = $tipoReciboEspecial;
+        $types .= 'i';
+      }
+    }
+    $sql = 'SELECT recibos.*, 
+      CASE 
+        WHEN recibos.id_tipo_recibo = 0 THEN "mensual" 
+        ELSE tre.nombre 
+      END AS tipo,
+      (
+        SELECT IFNULL(SUM(monto),0) FROM recibo_detalles d WHERE d.id_recibo = recibos.id
+      ) AS total_recibo
+      FROM recibos
+      LEFT JOIN tipos_recibo_especial tre ON recibos.id_tipo_recibo = tre.id';
     if (count($where) > 0) {
       $sql .= ' WHERE ' . implode(' AND ', $where);
     }
